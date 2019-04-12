@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <ImageView
+        android:id="@+id/url_iv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scaleType="centerCrop" />
+
+    <Button
+        android:id="@+id/show_lru_btn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="显示缓存内容" />
+    <Button
+        android:id="@+id/intent_btn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="网络请求图片"
+        />
+
+    <ImageView
+        android:id="@+id/lru_iv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scaleType="centerCrop" />
+</LinearLayout>
