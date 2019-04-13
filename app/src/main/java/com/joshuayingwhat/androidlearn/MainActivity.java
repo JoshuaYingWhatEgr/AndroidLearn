@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
+import com.joshuayingwhat.androidlearn.cache.DiskLruCacheActivity;
 import com.joshuayingwhat.androidlearn.cache.LruActivity;
 
 /**
@@ -20,6 +21,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Button lruBtn = (Button) findViewById(R.id.lru_btn);
+        Button diskLruBtn = (Button) findViewById(R.id.disk_lru_btn);
+        diskLruBtn.setOnClickListener(this);
         lruBtn.setOnClickListener(this);
     }
 
@@ -29,6 +32,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.lru_btn:
                 Intent intent = new Intent(this, LruActivity.class);
                 startActivity(intent);
+                break;
+            case R.id.disk_lru_btn:
+                Intent intent1 = new Intent(this, DiskLruCacheActivity.class);
+                startActivity(intent1);
                 break;
             default:
                 break;

@@ -19,6 +19,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".cache.LruActivity" />
+        <activity android:name=".cache.DiskLruCacheActivity" />
     </application>
 
 </manifest>

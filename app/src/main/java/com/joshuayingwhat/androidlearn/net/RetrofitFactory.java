@@ -1,5 +1,7 @@
 package com.joshuayingwhat.androidlearn.net;
 
+import android.text.TextUtils;
+
 import com.joshuayingwhat.androidlearn.BaseUrl;
 import com.joshuayingwhat.androidlearn.net.interceptor.HttpInterceptorLogger;
 
@@ -12,10 +14,13 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
  * 网络请求功能
+ *
+ * @author joshuayingwhat
  */
 public class RetrofitFactory {
 
-    private Retrofit retrofit;
+    private Retrofit.Builder retrofit;
+    private Retrofit build;
 
     public static RetrofitFactory getInstance() {
         return RetrofitHolder.INSTANCE;
@@ -25,7 +30,6 @@ public class RetrofitFactory {
         private static final RetrofitFactory INSTANCE = new RetrofitFactory();
     }
 
-
     private RetrofitFactory() {
         //初始化okhttp
         OkHttpClient okHttpClient = new OkHttpClient.Builder().connectTimeout(20000, TimeUnit.MILLISECONDS)
@@ -34,14 +38,23 @@ public class RetrofitFactory {
                 .build();
         if (retrofit == null) {
             retrofit = new Retrofit.Builder().client(okHttpClient)
-                    .baseUrl(BaseUrl.base_url)
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build();
+                    .addConverterFactory(GsonConverterFactory.create());
+        }
+
+        if (!TextUtils.isEmpty(BaseUrl.base_url)) {
+            build = retrofit.baseUrl(BaseUrl.base_url).build();
         }
     }
 
     public <T> T create(Class<T> clazz) {
-        return retrofit.create(clazz);
+        checkNotNull(build);
+        return build.create(clazz);
+    }
+
+    private <T> void checkNotNull(T object) {
+        if (object == null) {
+            throw new NullPointerException("BaseUrl为空,请先配置url参数!");
+        }
     }
 
 

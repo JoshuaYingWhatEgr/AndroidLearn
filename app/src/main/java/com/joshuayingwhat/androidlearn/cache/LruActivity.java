@@ -71,9 +71,7 @@ public class LruActivity extends AppCompatActivity implements View.OnClickListen
                     if (categoryResultResponse.body() != null && categoryResultResponse.body().results != null && categoryResultResponse.body().results.size() > 0) {
                         for (int i = 0; i < categoryResultResponse.body().results.size(); i++) {
                             CategoryResult.ResultsBean resultsBean = categoryResultResponse.body().results.get(i);
-                            if (getBitmapFormCache("100") == null) {
                                 newThread(resultsBean.url);
-                            }
                         }
                     }
                 }
