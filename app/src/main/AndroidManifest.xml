@@ -20,6 +20,7 @@
         </activity>
         <activity android:name=".cache.LruActivity" />
         <activity android:name=".cache.DiskLruCacheActivity" />
+        <activity android:name=".threadtask.ThreadLoadingBitmap" />
     </application>
 
 </manifest>

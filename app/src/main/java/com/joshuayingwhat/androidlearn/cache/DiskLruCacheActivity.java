@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -59,7 +58,6 @@ public class DiskLruCacheActivity extends AppCompatActivity implements View.OnCl
         File diskLruCacheDir = getDiskLruCacheDir(this);
         try {
             mDiskLruCache = DiskLruCache.open(diskLruCacheDir, 1, 1, DISK_CACHE_SIZE);
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -73,7 +71,6 @@ public class DiskLruCacheActivity extends AppCompatActivity implements View.OnCl
                 || !isExternalStorageRemovable() ? Objects.requireNonNull(getExternalCacheDir()).getPath() : context.getCacheDir().getPath();
         return new File(cachePath + File.separator + DiskLruCacheActivity.DISK_CACHE_SUBDIR);
     }
-
 
     private void acquireBitmap() {
         //首先请求网络获取图片资源
@@ -96,7 +93,6 @@ public class DiskLruCacheActivity extends AppCompatActivity implements View.OnCl
         });
     }
 
-
     public void newThread(String urls) {
         new Thread() {
             @Override
@@ -105,21 +101,21 @@ public class DiskLruCacheActivity extends AppCompatActivity implements View.OnCl
                 try {
                     //将bitmap加入硬盘缓存
                     DiskLruCache.Editor edit = mDiskLruCache.edit("100");
-                    OutputStream outputStream = edit.newOutputStream(0);
+                    OutputStream os = edit.newOutputStream(0);
                     URL url = new URL(urls);
                     HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                     urlConnection.connect();
                     int contentLength = urlConnection.getContentLength();
-                    BufferedInputStream bufferedInputStream = new BufferedInputStream(urlConnection.getInputStream(), contentLength);
-                    BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream, contentLength);
+                    BufferedInputStream bis = new BufferedInputStream(urlConnection.getInputStream(), contentLength);
+                    BufferedOutputStream bos = new BufferedOutputStream(os, contentLength);
                     int b;
-                    while ((b = bufferedInputStream.read()) != -1) {
-                        bufferedOutputStream.write(b);
+                    while ((b = bis.read()) != -1) {
+                        bos.write(b);
                     }
-                    bufferedOutputStream.flush();
+                    bos.flush();
 
-                    bufferedOutputStream.close();
-                    bufferedInputStream.close();
+                    bos.close();
+                    bis.close();
 
                     edit.commit();
                     mDiskLruCache.flush();
