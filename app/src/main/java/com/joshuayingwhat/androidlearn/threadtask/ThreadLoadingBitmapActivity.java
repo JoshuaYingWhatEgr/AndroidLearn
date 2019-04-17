@@ -33,7 +33,7 @@ public class ThreadLoadingBitmapActivity extends AppCompatActivity {
         threadIv = (ImageView) findViewById(R.id.thread_loading_iv);
 
         //执行bitmap的asynctask
-        loadBitmap(R.drawable.ic_launcher_background,threadIv);
+        loadBitmap(R.drawable.ic_launcher_background, threadIv);
 //        BitmapWorkerTask bitmapWorkerTask = new BitmapWorkerTask(threadIv);
 //        bitmapWorkerTask.execute(R.mipmap.ic_launcher);
     }
@@ -95,6 +95,8 @@ public class ThreadLoadingBitmapActivity extends AppCompatActivity {
     public static boolean cancelWorkerTask(int data, ImageView imageView) {
         BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
         if (bitmapWorkerTask != null) {
+            //当bitmapworkertask没有执行的data或者
+            // 当前的data和工作线程中的data不一致时就将这个工作线程删除
             if (bitmapWorkerTask.imageId == 0 || data != bitmapWorkerTask.imageId) {
                 bitmapWorkerTask.cancel(true);
             } else {

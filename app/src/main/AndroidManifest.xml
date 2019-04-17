@@ -21,6 +21,7 @@
         <activity android:name=".cache.LruActivity" />
         <activity android:name=".cache.DiskLruCacheActivity" />
         <activity android:name=".threadtask.ThreadLoadingBitmapActivity" />
+        <activity android:name=".PhotoWallActivity" />
     </application>
 
 </manifest>

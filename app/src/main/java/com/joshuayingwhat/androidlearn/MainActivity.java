@@ -24,9 +24,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Button lruBtn = (Button) findViewById(R.id.lru_btn);
         Button diskLruBtn = (Button) findViewById(R.id.disk_lru_btn);
         Button currentBtn = (Button) findViewById(R.id.concurrence_btn);
+        Button photonWallBtn = (Button) findViewById(R.id.photo_wall);
         diskLruBtn.setOnClickListener(this);
         lruBtn.setOnClickListener(this);
         currentBtn.setOnClickListener(this);
+        photonWallBtn.setOnClickListener(this);
     }
 
     @Override
@@ -43,6 +45,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.concurrence_btn:
                 Intent intent2 = new Intent(this, ThreadLoadingBitmapActivity.class);
                 startActivity(intent2);
+                break;
+            case R.id.photo_wall:
+                Intent intent3 = new Intent(this, PhotoWallActivity.class);
+                startActivity(intent3);
                 break;
             default:
                 break;
