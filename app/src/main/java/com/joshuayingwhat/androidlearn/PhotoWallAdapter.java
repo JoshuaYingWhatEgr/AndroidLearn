@@ -3,6 +3,7 @@ package com.joshuayingwhat.androidlearn;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Rect;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -94,7 +95,7 @@ public class PhotoWallAdapter extends RecyclerView.Adapter<PhotoWallAdapter.View
                 urlConnection.connect();
                 int contentLength = urlConnection.getContentLength();
                 InputStream is = urlConnection.getInputStream();
-                bitmap = BitmapFactory.decodeStream(is);
+                bitmap = decodeBitmapFromMemory(is, 50, 50);
                 //将bitmap加入缓存
                 if (bitmap != null) {
                     MemoryLruCache.getInstance().addBitmapToMemoryCache(s[0], bitmap);
@@ -118,4 +119,37 @@ public class PhotoWallAdapter extends RecyclerView.Adapter<PhotoWallAdapter.View
         }
     }
 
+    /**
+     * 计算bitmap大小
+     */
+    public Bitmap decodeBitmapFromMemory(InputStream is, int reqWidth, int reqHeight) {
+
+        BitmapFactory.Options options = new BitmapFactory.Options();
+
+        //该资源已经在内存中了
+        BitmapFactory.decodeStream(is, new Rect(), options);
+        options.inSampleSize = calculateBitmapSize(options, reqWidth, reqHeight);
+
+        return BitmapFactory.decodeStream(is, new Rect(), options);
+    }
+
+    private int calculateBitmapSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+
+        int outHeight = options.outHeight;
+
+        int outWidth = options.outWidth;
+
+        int inSampleSize = 1;
+
+        if (outHeight > reqHeight || outWidth > reqWidth) {
+            final int halfWidth = outWidth / 2;
+            final int halfHeight = outHeight / 2;
+
+            while ((halfWidth / inSampleSize) >= reqWidth && (halfHeight / inSampleSize) >= reqHeight) {
+                inSampleSize *= 2;
+            }
+        }
+
+        return inSampleSize;
+    }
 }
