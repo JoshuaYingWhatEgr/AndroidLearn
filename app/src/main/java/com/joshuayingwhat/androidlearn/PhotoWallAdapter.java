@@ -1,9 +1,13 @@
 package com.joshuayingwhat.androidlearn;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -15,6 +19,7 @@ import android.widget.ImageView;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -22,6 +27,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * 处理加载图片并发问题Concurrency
+ *
  * @author joshuayingwhat
  */
 public class PhotoWallAdapter extends RecyclerView.Adapter<PhotoWallAdapter.ViewHolder> {
@@ -65,31 +72,43 @@ public class PhotoWallAdapter extends RecyclerView.Adapter<PhotoWallAdapter.View
     }
 
     private void loadBitMap(ViewHolder viewHolder, int i) {
-        //如果内存缓存中没有资源就执行下载操作
-        if (MemoryLruCache.getInstance().getBitmapFromMemoryCache(imageThumbUrls[i]) == null) {
+        //处理并发问题
+        if (cancelPreviousTask(imageThumbUrls[i], viewHolder.grideIv)) {
+            //如果内存缓存中没有资源就执行下载操作
+            if (MemoryLruCache.getInstance().getBitmapFromMemoryCache(imageThumbUrls[i]) == null) {
 
-            CacheMemoryWorkerTask cacheMemoryWorkerTask = new CacheMemoryWorkerTask(viewHolder);
-            cacheMemoryWorkerTask.execute(imageThumbUrls[i]);
-            CacheMemoryWorkerTaskcollecation.add(cacheMemoryWorkerTask);
-            Log.e("Tag", "网络请求资源");
-        } else {
-            viewHolder.grideIv.setImageBitmap(MemoryLruCache.getInstance().getBitmapFromMemoryCache(imageThumbUrls[i]));
-            Log.e("Tag", "从缓存中获取");
+                CacheMemoryWorkerTask cacheMemoryWorkerTask = new CacheMemoryWorkerTask(viewHolder, viewHolder.grideIv);
+                Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.empty_photo);
+                AsyncDrawable asyncDrawable = new AsyncDrawable(mContext.getResources(), bitmap, cacheMemoryWorkerTask);
+                viewHolder.grideIv.setImageDrawable(asyncDrawable);
+                cacheMemoryWorkerTask.execute(imageThumbUrls[i]);
+                CacheMemoryWorkerTaskcollecation.add(cacheMemoryWorkerTask);
+                Log.e("Tag", "网络请求资源");
+            } else {
+                viewHolder.grideIv.setImageBitmap(MemoryLruCache.getInstance().getBitmapFromMemoryCache(imageThumbUrls[i]));
+                Log.e("Tag", "从缓存中获取");
+            }
         }
+
     }
 
+    @SuppressLint("StaticFieldLeak")
     class CacheMemoryWorkerTask extends AsyncTask<String, Void, Bitmap> {
 
         private ViewHolder viewHolder;
         private Bitmap bitmap;
+        private WeakReference<ImageView> imageViewWeakReference;
+        private String s1;
 
-        public CacheMemoryWorkerTask(ViewHolder viewHolder) {
+        CacheMemoryWorkerTask(ViewHolder viewHolder, ImageView imageView) {
             this.viewHolder = viewHolder;
+            imageViewWeakReference = new WeakReference<>(imageView);
         }
 
         @Override
         protected Bitmap doInBackground(String... s) {
             try {
+                s1 = s[0];
                 URL url = new URL(s[0]);
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.connect();
@@ -112,8 +131,18 @@ public class PhotoWallAdapter extends RecyclerView.Adapter<PhotoWallAdapter.View
         @Override
         protected void onPostExecute(Bitmap bitmap) {
             super.onPostExecute(bitmap);
+            if (isCancelled()) {
+                bitmap = null;
+            }
+
             if (bitmap != null) {
-                viewHolder.grideIv.setImageBitmap(bitmap);
+                if (imageViewWeakReference.get() != null) {
+                    CacheMemoryWorkerTask cacheMemoryWorkerTask = getCacheMemoryWorkerTask(imageViewWeakReference.get());
+                    if (this == cacheMemoryWorkerTask) {
+                        imageViewWeakReference.get().setImageBitmap(bitmap);
+                    }
+                }
+
             }
             CacheMemoryWorkerTaskcollecation.remove(this);
         }
@@ -122,13 +151,17 @@ public class PhotoWallAdapter extends RecyclerView.Adapter<PhotoWallAdapter.View
     /**
      * 计算bitmap大小
      */
-    public Bitmap decodeBitmapFromMemory(InputStream is, int reqWidth, int reqHeight) {
+    private Bitmap decodeBitmapFromMemory(InputStream is, int reqWidth, int reqHeight) {
 
         BitmapFactory.Options options = new BitmapFactory.Options();
 
         //该资源已经在内存中了
         BitmapFactory.decodeStream(is, new Rect(), options);
+
         options.inSampleSize = calculateBitmapSize(options, reqWidth, reqHeight);
+
+        //系统默认是ARGB_8888每个像素占4个字节
+        options.inPreferredConfig = Bitmap.Config.ARGB_4444;
 
         return BitmapFactory.decodeStream(is, new Rect(), options);
     }
@@ -151,5 +184,51 @@ public class PhotoWallAdapter extends RecyclerView.Adapter<PhotoWallAdapter.View
         }
 
         return inSampleSize;
+    }
+
+    /**
+     * 解决并发问题
+     */
+    private boolean cancelPreviousTask(String resId, ImageView imageView) {
+        //获取到当前视图的task
+        CacheMemoryWorkerTask cacheMemoryWorkerTask = getCacheMemoryWorkerTask(imageView);
+        if (cacheMemoryWorkerTask != null) {
+            if (!cacheMemoryWorkerTask.s1.equals(resId)) {
+                cacheMemoryWorkerTask.cancel(true);
+            } else {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static class AsyncDrawable extends BitmapDrawable {
+        private WeakReference<CacheMemoryWorkerTask> cacheMemoryWorkerTaskWeakReference = null;
+
+        AsyncDrawable(Resources resources, Bitmap bitmap, CacheMemoryWorkerTask cacheMemoryWorkerTask) {
+            super(resources, bitmap);
+            cacheMemoryWorkerTaskWeakReference = new WeakReference(cacheMemoryWorkerTask);
+        }
+
+        CacheMemoryWorkerTask getCacheMemoryWorkerTask() {
+            return cacheMemoryWorkerTaskWeakReference.get();
+        }
+    }
+
+    /**
+     * 检索asynctask是否被分配到指定的imageview
+     *
+     * @param imageView
+     * @return
+     */
+    private static CacheMemoryWorkerTask getCacheMemoryWorkerTask(ImageView imageView) {
+        if (imageView != null) {
+            Drawable drawable = imageView.getDrawable();
+            if (drawable instanceof AsyncDrawable) {
+                AsyncDrawable asyncDrawable = (AsyncDrawable) drawable;
+                return asyncDrawable.getCacheMemoryWorkerTask();
+            }
+        }
+        return null;
     }
 }

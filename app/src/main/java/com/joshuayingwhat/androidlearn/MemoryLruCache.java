@@ -11,7 +11,7 @@ public class MemoryLruCache {
 
     private LruCache<String, Bitmap> memoryLruCache;
 
-    public static MemoryLruCache getInstance() {
+    static MemoryLruCache getInstance() {
         return Holder.INSTANCE;
     }
 

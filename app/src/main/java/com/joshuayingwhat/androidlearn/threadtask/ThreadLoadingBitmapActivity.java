@@ -18,7 +18,7 @@ import java.lang.ref.WeakReference;
 
 /**
  * 这里是处理bitmap在子线程中
- * todo 处理并发问题
+ * 处理并发问题
  *
  * @author joshuayingwhat
  */
@@ -45,7 +45,7 @@ public class ThreadLoadingBitmapActivity extends AppCompatActivity {
 
         private Integer imageId;
 
-        public BitmapWorkerTask(ImageView threadIv) {
+        private BitmapWorkerTask(ImageView threadIv) {
             imageViewReference = new WeakReference<>(threadIv);
         }
 
@@ -78,13 +78,13 @@ public class ThreadLoadingBitmapActivity extends AppCompatActivity {
     static class AsyncDrawable extends BitmapDrawable {
         final WeakReference<BitmapWorkerTask> bitmapWorkerTaskWeakReference;
 
-        public AsyncDrawable(Resources res, Bitmap bitmap, BitmapWorkerTask bitmapWorkerTask) {
+        AsyncDrawable(Resources res, Bitmap bitmap, BitmapWorkerTask bitmapWorkerTask) {
             super(res, bitmap);
             bitmapWorkerTaskWeakReference = new WeakReference<>(bitmapWorkerTask);
         }
 
 
-        public BitmapWorkerTask getBitmapWorkerTAsk() {
+        BitmapWorkerTask getBitmapWorkerTAsk() {
             return bitmapWorkerTaskWeakReference.get();
         }
     }
@@ -98,6 +98,7 @@ public class ThreadLoadingBitmapActivity extends AppCompatActivity {
             //当bitmapworkertask没有执行的data或者
             // 当前的data和工作线程中的data不一致时就将这个工作线程删除
             if (bitmapWorkerTask.imageId == 0 || data != bitmapWorkerTask.imageId) {
+                //将当前线程取消掉
                 bitmapWorkerTask.cancel(true);
             } else {
                 return false;
@@ -106,6 +107,7 @@ public class ThreadLoadingBitmapActivity extends AppCompatActivity {
         return true;
     }
 
+    //获取工作线程
     public static BitmapWorkerTask getBitmapWorkerTask(ImageView imageView) {
         if (imageView != null) {
             Drawable drawable = imageView.getDrawable();
@@ -120,7 +122,7 @@ public class ThreadLoadingBitmapActivity extends AppCompatActivity {
     public void loadBitmap(int data, ImageView imageView) {
         if (cancelWorkerTask(data, imageView)) {
             BitmapWorkerTask bitmapWorkerTask = new BitmapWorkerTask(imageView);
-            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher_background);
+            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.empty_photo);
             AsyncDrawable asyncDrawable = new AsyncDrawable(getResources(), bitmap, bitmapWorkerTask);
             imageView.setImageDrawable(asyncDrawable);
             bitmapWorkerTask.execute(data);
