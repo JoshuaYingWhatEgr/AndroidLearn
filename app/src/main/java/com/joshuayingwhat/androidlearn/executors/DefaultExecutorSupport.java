@@ -2,6 +2,7 @@ package com.joshuayingwhat.androidlearn.executors;
 
 import android.os.Process;
 
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -10,8 +11,9 @@ public class DefaultExecutorSupport {
 
     private final ThreadPoolExecutor forBackGroundTasks;
     private final MainThreadExecutor mMainThreadExecutor;
+    private final PriortyThreadPoolExecutor grandePriortyThreadPoolExecutor;
 
-    public DefaultExecutorSupport getInstance() {
+    public static DefaultExecutorSupport getInstance() {
         return Holder.INSTANCE;
     }
 
@@ -44,7 +46,7 @@ public class DefaultExecutorSupport {
         LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
 
         /**
-         * 设置线程优先级
+         *
          */
         PriorityThreadFactory priorityThreadFactory = new PriorityThreadFactory(Process.THREAD_PRIORITY_BACKGROUND);
 
@@ -58,5 +60,24 @@ public class DefaultExecutorSupport {
          *  设置UI线程池
          */
         mMainThreadExecutor = new MainThreadExecutor();
+
+        /**
+         * 设置线程的优先级的线程池
+         */
+        grandePriortyThreadPoolExecutor = new PriortyThreadPoolExecutor(CORE_POOL_SIZE, MAX_POOL_SIZE, KEEP_ALIVE_SECONDS,
+                TimeUnit.SECONDS, queue, priorityThreadFactory);
+    }
+
+    public ThreadPoolExecutor getForBackGroundTasks() {
+        return forBackGroundTasks;
+    }
+
+    public MainThreadExecutor getmMainThreadExecutor() {
+        return mMainThreadExecutor;
+    }
+
+
+    public PriortyThreadPoolExecutor getGrandePriortyThreadPoolExecutor() {
+        return grandePriortyThreadPoolExecutor;
     }
 }

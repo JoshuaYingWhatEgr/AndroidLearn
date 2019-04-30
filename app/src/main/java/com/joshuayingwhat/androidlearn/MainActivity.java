@@ -8,6 +8,9 @@ import android.widget.Button;
 
 import com.joshuayingwhat.androidlearn.cache.DiskLruCacheActivity;
 import com.joshuayingwhat.androidlearn.cache.LruActivity;
+import com.joshuayingwhat.androidlearn.executors.DefaultExecutorSupport;
+import com.joshuayingwhat.androidlearn.executors.Priority;
+import com.joshuayingwhat.androidlearn.executors.PriortyRunnable;
 import com.joshuayingwhat.androidlearn.threadtask.ThreadLoadingBitmapActivity;
 
 /**
@@ -29,6 +32,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         lruBtn.setOnClickListener(this);
         currentBtn.setOnClickListener(this);
         photonWallBtn.setOnClickListener(this);
+
+        DefaultExecutorSupport.getInstance().getGrandePriortyThreadPoolExecutor().submit(new PriortyRunnable(Priority.LOW) {
+            @Override
+            public void run() {
+                System.out.println("低优先级线程执行了");
+            }
+        });
+
+        DefaultExecutorSupport.getInstance().getGrandePriortyThreadPoolExecutor().submit(new PriortyRunnable(Priority.HIGHT) {
+            @Override
+            public void run() {
+                System.out.println("高优先级线程执行了500");
+            }
+        });
+
+        DefaultExecutorSupport.getInstance().getGrandePriortyThreadPoolExecutor().submit(new PriortyRunnable(Priority.MEDIUM) {
+            @Override
+            public void run() {
+                System.out.println("中优先级线程执行了500");
+            }
+        });
     }
 
     @Override
